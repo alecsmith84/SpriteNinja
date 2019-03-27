@@ -28,6 +28,94 @@
 
 import SpriteKit
 
+// This does some sort of math on the projectiles
+func +(left: CGPoint, right: CGPoint) -> CGPoint {
+  return CGPoint(x: left.x + right.x, y: left.y + right.y)
+}
+func -(left: CGPoint, right: CGPoint) -> CGPoint {
+  return CGPoint(x: left.x - right.x, y: left.y - right.y)
+}
+func *(point: CGPoint, scalar: CGFloat) -> CGPoint {
+  return CGPoint(x: point.x * scalar, y: point.y * scalar)
+}
+func /(point: CGPoint, scalar: CGFloat) -> CGPoint {
+  return CGPoint(x: point.x / scalar, y: point.y / scalar)
+}
+#if !(arch(x86_64) || arch(arm64))
+func sqrt(a: CGFloat) -> CGFloat {
+  return CGFloat(sqrtf(Float(a)))
+}
+#endif
+
+extension CGPoint {
+  func length() -> CGFloat {
+    return sqrt(x*x + y*y)
+  }
+  
+  func normalized() -> CGPoint {
+    return self / length()
+  }
+}
+// done with the math
+
 class GameScene: SKScene {
+  //1 declares the player sprite
+  let player = SKSpriteNode(imageNamed: "player")
+  
+  override func didMove(to view: SKView) {
+    //2 sets background color to whatever
+    backgroundColor = SKColor.white
+    //3 position player 10% across horizontally and vertically centered
+    player.position = CGPoint(x: size.width * 0.1, y: size.height * 0.5)
+    //4 call player to show on the screen
+    addChild(player)
+    
+    
+    // calls monster create method
+    run(SKAction.repeatForever(
+      SKAction.sequence([
+        SKAction.run(addMonster),
+        SKAction.wait(forDuration: 1.0)
+        ])
+    ))
+  }
+  
+  // moving monsters
+  
+  // random func for randomizing location I think
+  func random() -> CGFloat {
+    return CGFloat(Float(arc4random()) / 0xFFFFFFFF)
+  }
+  
+  func random(min: CGFloat, max: CGFloat) -> CGFloat {
+    return random() * (max - min) + min
+  }
+  
+  func addMonster() {
+    
+    // Create sprite
+    let monster = SKSpriteNode(imageNamed: "monster")
+    
+    // Determine where monsters spawn along Y axis
+    let actualY = random(min: monster.size.height/2, max: size.height - monster.size.height/2)
+    
+    // position monster off screen on right edge and at a random Y
+    monster.position = CGPoint(x: size.width + monster.size.width/2, y: actualY)
+    
+    // add monster
+    addChild(monster)
+    
+    // set speed of monster
+    let actualDuration = random(min: CGFloat(2.0), max: CGFloat(4.0))
+    
+    // create actions
+    // SKAction.move used to tell when it should leave the opposite side of the screen from
+    // where it enters
+    let actionMove = SKAction.move(to: CGPoint(x: -monster.size.width/2, y: actualY), duration: TimeInterval(actualDuration))
+    // .removeFromParent basically deletes the thing from the scene
+    let actionMoveDone = SKAction.removeFromParent()
+    // .sequence allows you to chain sequence of actions
+    monster.run(SKAction.sequence([actionMove, actionMoveDone]))
+  }
   
 }
