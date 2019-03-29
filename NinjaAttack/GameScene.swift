@@ -28,6 +28,14 @@
 
 import SpriteKit
 
+// Physics Struct
+struct PhysicsCategory {
+  static let none      : UInt32 = 0
+  static let all       : UInt32 = UInt32.max
+  static let monster   : UInt32 = 0b1  //1
+  static let projectile: UInt32 = 0b10 //2
+}
+
 // This does some sort of math on the projectiles
 func +(left: CGPoint, right: CGPoint) -> CGPoint {
   return CGPoint(x: left.x + right.x, y: left.y + right.y)
@@ -78,6 +86,10 @@ class GameScene: SKScene {
         SKAction.wait(forDuration: 1.0)
         ])
     ))
+    
+    // add physics
+    physicsWorld.gravity = .zero
+    physicsWorld.contactDelegate = self
   }
   
   // moving monsters
@@ -91,6 +103,7 @@ class GameScene: SKScene {
     return random() * (max - min) + min
   }
   
+  // add monsters
   func addMonster() {
     
     // Create sprite
@@ -116,6 +129,91 @@ class GameScene: SKScene {
     let actionMoveDone = SKAction.removeFromParent()
     // .sequence allows you to chain sequence of actions
     monster.run(SKAction.sequence([actionMove, actionMoveDone]))
+    
+    // 1. create physics body
+    monster.physicsBody = SKPhysicsBody(rectangleOf: monster.size)
+    // 2. sets as dynamic so the physics engine does not effect the monster only the code does
+    monster.physicsBody?.isDynamic = true
+    // 3. set category
+    monster.physicsBody?.categoryBitMask = PhysicsCategory.monster
+    // 4. I think this makes it where it only the projectiles to keep them from colliding with eachother
+    monster.physicsBody?.contactTestBitMask = PhysicsCategory.projectile
+    // 5.  what things bounce off of
+    monster.physicsBody?.collisionBitMask = PhysicsCategory.none
+  }
+ 
+  // MARK: projectile
+  override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    // 1 - Choose one of the touches to work with
+    guard let touch = touches.first else {
+      return
+    }
+    let touchLocation = touch.location(in: self)
+    
+    // 2 - initial location of projectile
+    let projectile = SKSpriteNode(imageNamed: "projectile")
+    projectile.position = player.position
+    
+    // add physics
+    projectile.physicsBody = SKPhysicsBody(circleOfRadius: projectile.size.width/2)
+    projectile.physicsBody?.isDynamic = true
+    projectile.physicsBody?.categoryBitMask = PhysicsCategory.projectile
+    projectile.physicsBody?.contactTestBitMask = PhysicsCategory.monster
+    projectile.physicsBody?.collisionBitMask = PhysicsCategory.none
+    projectile.physicsBody?.usesPreciseCollisionDetection = true
+    
+    // 3 - Determine offset of location to projectile
+    let offset = touchLocation - projectile.position
+    
+    // 4 - dont shoot down or backwards
+    if offset.x < 0 {return}
+    
+    // 5 - add it
+    addChild(projectile)
+    
+    // 6 - get direction of shots
+    let direction = offset.normalized()
+    
+    // 7 - shoot off screen
+    let shootAmount = direction * 1000
+    
+    // 8 - add shoot amount
+    let realDest = shootAmount + projectile.position
+    
+    // 9 - create actions
+    let actionMove = SKAction.move(to: realDest, duration: 2.0)
+    let actionMoveDone = SKAction.removeFromParent()
+    projectile.run(SKAction.sequence([actionMove, actionMoveDone]))
+  }
+  // removes projectile and moster from the screen when they collide
+  func projectileDidCollideWithMonster(projectile: SKSpriteNode, monster: SKSpriteNode) {
+    print("hit")
+    projectile.removeFromParent()
+    monster.removeFromParent()
+  }
+}
+
+extension GameScene: SKPhysicsContactDelegate {
+  func didBegin(_ contact: SKPhysicsContact) {
+    // 1 
+    var firstBody: SKPhysicsBody
+    var secondBody: SKPhysicsBody
+    if contact.bodyA.categoryBitMask < contact.bodyB.categoryBitMask {
+      firstBody = contact.bodyA
+      secondBody = contact.bodyB
+    } else {
+      firstBody = contact.bodyB
+      secondBody = contact.bodyA
+    }
+    
+    // 2
+    if ((firstBody.categoryBitMask & PhysicsCategory.monster != 0) &&
+      (secondBody.categoryBitMask & PhysicsCategory.projectile != 0)) {
+      if let monster = firstBody.node as? SKSpriteNode,
+        let projectile = secondBody.node as? SKSpriteNode {
+        projectileDidCollideWithMonster(projectile: projectile, monster: monster)
+      }
+    }
   }
   
 }
