@@ -90,6 +90,12 @@ class GameScene: SKScene {
     // add physics
     physicsWorld.gravity = .zero
     physicsWorld.contactDelegate = self
+    
+    // set background music
+    let backgroundMusic = SKAudioNode(fileNamed: "background-music-aac.caf")
+    backgroundMusic.autoplayLooped = true
+    addChild(backgroundMusic)
+
   }
   
   // moving monsters
@@ -148,6 +154,9 @@ class GameScene: SKScene {
     guard let touch = touches.first else {
       return
     }
+    // shooting sound effect
+    run(SKAction.playSoundFileNamed("pew-pew-lei.caf", waitForCompletion: false))
+
     let touchLocation = touch.location(in: self)
     
     // 2 - initial location of projectile
