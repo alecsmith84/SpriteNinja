@@ -74,7 +74,7 @@ class GameScene: SKScene {
   
   override func didMove(to view: SKView) {
     //2 sets background color to whatever
-    backgroundColor = SKColor.white
+    backgroundColor = SKColor.blue
     //3 position player 10% across horizontally and vertically centered
     player.position = CGPoint(x: size.width * 0.1, y: size.height * 0.5)
     //4 call player to show on the screen
