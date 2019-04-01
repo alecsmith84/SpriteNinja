@@ -69,6 +69,8 @@ extension CGPoint {
 class GameScene: SKScene {
   //1 declares the player sprite
   let player = SKSpriteNode(imageNamed: "player")
+  var monstersDestroyed = 0
+
   
   override func didMove(to view: SKView) {
     //2 sets background color to whatever
@@ -134,7 +136,14 @@ class GameScene: SKScene {
     // .removeFromParent basically deletes the thing from the scene
     let actionMoveDone = SKAction.removeFromParent()
     // .sequence allows you to chain sequence of actions
-    monster.run(SKAction.sequence([actionMove, actionMoveDone]))
+    let loseAction = SKAction.run() { [weak self] in
+      guard let `self` = self else { return }
+      let reveal = SKTransition.flipHorizontal(withDuration: 0.5)
+      let gameOverScene = GameOverScene(size: self.size, won: false)
+      self.view?.presentScene(gameOverScene, transition: reveal)
+    }
+    monster.run(SKAction.sequence([actionMove, loseAction, actionMoveDone]))
+
     
     // 1. create physics body
     monster.physicsBody = SKPhysicsBody(rectangleOf: monster.size)
@@ -199,6 +208,14 @@ class GameScene: SKScene {
     print("hit")
     projectile.removeFromParent()
     monster.removeFromParent()
+    
+    monstersDestroyed += 1
+    if monstersDestroyed > 30 {
+      let reveal = SKTransition.flipHorizontal(withDuration: 0.5)
+      let gameOverScene = GameOverScene(size: self.size, won: true)
+      view?.presentScene(gameOverScene, transition: reveal)
+    }
+
   }
 }
 
