@@ -34,7 +34,7 @@ class GameOverScene: SKScene {
     super.init(size: size)
     
     // 1 set background
-    backgroundColor = SKColor.white
+    backgroundColor = SKColor.blue
     
     // 2 did you win or loose
     let message = won ? "You Won!" : "You Lose :["

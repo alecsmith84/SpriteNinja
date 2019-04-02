@@ -70,11 +70,12 @@ class GameScene: SKScene {
   //1 declares the player sprite
   let player = SKSpriteNode(imageNamed: "player")
   var monstersDestroyed = 0
+  var background = SKSpriteNode(imageNamed: "background")
 
   
   override func didMove(to view: SKView) {
     //2 sets background color to whatever
-    backgroundColor = SKColor.blue
+    
     //3 position player 10% across horizontally and vertically centered
     player.position = CGPoint(x: size.width * 0.1, y: size.height * 0.5)
     //4 call player to show on the screen
@@ -89,15 +90,20 @@ class GameScene: SKScene {
         ])
     ))
     
+    background.position = CGPoint(x: frame.size.width / 2, y: frame.size.height / 2)
+    background.size = CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+    background.zPosition = -30
+    addChild(background)
+    
     // add physics
     physicsWorld.gravity = .zero
     physicsWorld.contactDelegate = self
     
     // set background music
-    let backgroundMusic = SKAudioNode(fileNamed: "background-music-aac.caf")
+    let backgroundMusic = SKAudioNode(fileNamed: "backgroundMusic.mp3")
     backgroundMusic.autoplayLooped = true
     addChild(backgroundMusic)
-
+    
   }
   
   // moving monsters
@@ -127,7 +133,7 @@ class GameScene: SKScene {
     addChild(monster)
     
     // set speed of monster
-    let actualDuration = random(min: CGFloat(2.0), max: CGFloat(4.0))
+    let actualDuration = random(min: CGFloat(5.0), max: CGFloat(10.0))
     
     // create actions
     // SKAction.move used to tell when it should leave the opposite side of the screen from
